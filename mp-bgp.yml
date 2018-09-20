@@ -1,0 +1,59 @@
+---
+- name: PE1 BGP CONFIG
+  hosts: PE1
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: CONFIGURE MP-BGP ON PE1
+      ios_config:
+           lines:
+             - "{{ item }}"
+           parents:
+             - router bgp 65000
+             - neighbor 3.3.3.3 remote-as 65000
+             - neighbor 3.3.3.3 update-source loopback 0
+             - address-family vpnv4 unicast
+      with_items:
+          - neighbor 3.3.3.3 send-community both
+          - neighbor 3.3.3.3 activate
+
+- name: CONFIG BGP PE2
+  gather_facts: false
+  hosts: PE2
+  connection: local
+  tasks:
+    - name: CONFIGURE MP-BGP ON PE2
+      ios_config:
+           lines:
+             - "{{ item }}"
+           parents:
+             - router bgp 65000
+             - neighbor 1.1.1.1 remote-as 65000
+             - neighbor 1.1.1.1 update-source loopback 0
+             - address-family vpnv4 unicast
+      with_items:
+          - neighbor 1.1.1.1 send-community both
+          - neighbor 1.1.1.1 activate
+
+- name: VERIFY PEERS ARE UP
+  gather_facts: false
+  hosts: MPLS-PE
+  connection: local
+  tasks:
+    - name: VERIFY THE BGP PEERS ARE UP
+      ios_command:
+        commands:
+             - show bgp vpnv4 unicast all summary
+      register: print_output
+    -  debug: var=print_output.stdout_lines
+
+- name: SAVE THE CONFIG
+  gather_facts: false
+  hosts: all
+  connection: local
+  tasks:
+    - name: SAVE CONFIG ON ALL DEVICES
+      ios_command:
+        commands:
+             - write memory
+

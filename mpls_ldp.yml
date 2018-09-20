@@ -1,0 +1,66 @@
+---
+- name: ENABLE CEF AND MPLS ON PEs and P
+  hosts: MPLS-PE,MPLS-P
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: ENABLE CEF AND SPECIFY PROTOCOL AS LDP
+      ios_config:
+        lines:
+          - ip cef
+          - mpls label protocol ldp
+
+- name: ENABLE MPLS ON P INTERFACE
+  hosts: MPLS-P
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: ENABLE MPLS ON P INTERFACE
+      ios_config:
+        lines:
+          - mpls ip
+        parents:
+          - "{{ item }}"
+      with_items:
+          - interface fastethernet0/0
+          - interface fastethernet0/1
+
+- name: ENABLE MPLS ON PE INTERFACE
+  hosts: PE1
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: ENABLE MPLS ON PE1 INTERFACE
+      ios_config:
+        commands:
+          - mpls ip
+        parents:
+          - interface Gig 0/1
+
+- name: ENABLE MPLS ON PE INTERFACE
+  hosts: PE2
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: ENABLE MPLS ON PE2 INTERFACE
+      ios_config:
+        commands:
+          - mpls ip
+        parents:
+          - interface fastethernet 0/1
+
+- name: SAVE THE CONFIG ON ALL DEVICES
+  hosts: all
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: SAVE THE RUNNING CONFIG TO STARTUP
+      ios_command:
+        commands:
+          - write memory
+
